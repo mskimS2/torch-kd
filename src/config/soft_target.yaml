@@ -7,7 +7,8 @@ dataset: "cifar10"
 num_workers: 4
 pin_memory: false
 model_dir: "src/results"
-model_path: "logits_kd"
-log_dir: "logs/logits_kd"
-experiment_name: "logits_kd/train"
-kd_weights: 0.1
+model_path: "soft_target"
+log_dir: "logs/soft_target"
+experiment_name: "soft_target/train"
+kd_weights: 1.
+temperature: 4.

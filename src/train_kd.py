@@ -1,5 +1,6 @@
 import os
 import torch
+import argparse
 import numpy as np
 from torch import nn
 from tqdm import tqdm
@@ -11,7 +12,7 @@ from collections import defaultdict
 from model import CNN, SmallCNN
 from utils import set_randomness
 from dataset import get_dataloaders
-from kd.logit import LogitsKDLoss
+from kd import get_kd_loss
 from config.parse import load_yaml
 
 
@@ -125,11 +126,15 @@ def save_model(model: nn.Module, filename: str):
 
 
 if __name__ == "__main__":
-    config = load_yaml("src/config/logits_kd.yaml")
+    args = argparse.ArgumentParser(description="Train a student model using knowledge distillation.")
+    args.add_argument("--kd", type=str, default="logits", help="logits, soft_target")
+    p = args.parse_args()
+
+    config = load_yaml(f"src/config/{p.kd}.yaml")
     print(config)
 
-    # Set random seed for reproducibility
-    set_randomness(config["random_seed"])
+    set_randomness(config["random_seed"])  # Set random seed for reproducibility
+    os.makedirs(config["model_dir"], exist_ok=True)  # Create a directory to save the model
 
     # Load the dataset
     dataLoader = get_dataloaders(config)
@@ -143,11 +148,8 @@ if __name__ == "__main__":
     student = SmallCNN(num_classes=10).to(config["device"])
 
     criterion = nn.CrossEntropyLoss()
-    kd_loss = LogitsKDLoss(weights=config["kd_weights"])
     optimizer = torch.optim.Adam(student.parameters(), lr=config["lr"])
-
-    # Create a directory to save the model
-    os.makedirs(config["model_dir"], exist_ok=True)
+    kd_loss = get_kd_loss(p.kd, config)
 
     # Create a logger
     logger = TensorBoardLogger(config["log_dir"])

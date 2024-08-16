@@ -5,7 +5,8 @@ import torch.nn.functional as F
 
 class LogitsKDLoss(nn.Module):
     """
-    http://papers.nips.cc/paper/5484-do-deep-nets-really-need-to-be-deep.pdf
+    Do Deep Nets Really Need to be Deep?
+    - http://papers.nips.cc/paper/5484-do-deep-nets-really-need-to-be-deep
     """
 
     def __init__(self, weights: float = 1.0):

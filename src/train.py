@@ -113,8 +113,8 @@ def load_model(filename: str, num_classes: int) -> nn.Module:
 
 
 if __name__ == "__main__":
-    # config = load_yaml("src/config/teacher.yaml")
-    config = load_yaml("src/config/student.yaml")
+    config = load_yaml("src/config/teacher.yaml")
+    # config = load_yaml("src/config/student.yaml")
     print(config)
 
     # Create a model
@@ -122,26 +122,25 @@ if __name__ == "__main__":
     # model = SmallCNN(num_classes=10).to(config["device"])
     print(compute_model_size(model))
 
-    # # Set random seed for reproducibility
-    # set_randomness(config["random_seed"])
+    # Set random seed for reproducibility
+    set_randomness(config["random_seed"])
 
-    # # Load the dataset
-    # dataLoader = get_dataloaders(config)
-    # train_loader = dataLoader["train"]
-    # test_loader = dataLoader["test"]
+    # Load the dataset
+    dataLoader = get_dataloaders(config)
+    train_loader = dataLoader["train"]
+    test_loader = dataLoader["test"]
 
-    # # model = SmallCNN(num_classes=10).to(config["device"])
-    # criterion = nn.CrossEntropyLoss()
-    # optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
-    # # Create a directory to save the model
-    # os.makedirs(config["model_dir"], exist_ok=True)
+    # Create a directory to save the model
+    os.makedirs(config["model_dir"], exist_ok=True)
 
-    # # Create a logger
-    # logger = TensorBoardLogger(config["log_dir"])
-    # logger.init_logger()
-    # logger.init_experiment(config["experiment_name"])
-    # logger.log_params(config)
+    # Create a logger
+    logger = TensorBoardLogger(config["log_dir"])
+    logger.init_logger()
+    logger.init_experiment(config["experiment_name"])
+    logger.log_params(config)
 
-    # # Train the model
-    # train_and_evaluate(config, model, train_loader, test_loader, criterion, optimizer, logger)
+    # Train the model
+    train_and_evaluate(config, model, train_loader, test_loader, criterion, optimizer, logger)
