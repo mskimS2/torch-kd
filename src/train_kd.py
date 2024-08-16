@@ -9,14 +9,19 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from loggers.tensorboard import TensorBoardLogger
 from collections import defaultdict
 from model import CNN, SmallCNN
-from utils import set_randomness, compute_model_size
+from utils import set_randomness
 from dataset import get_dataloaders
+from kd.logit import LogitsKDLoss
 from config.parse import load_yaml
 
 
-def compute_metrics(outputs: torch.Tensor, labels: torch.Tensor, loss: float) -> Dict[str, float]:
-    loss = criterion(outputs, labels).item()
-    preds = outputs.argmax(dim=1).cpu().numpy()
+def compute_metrics(
+    student_preds: torch.Tensor,
+    labels: torch.Tensor,
+    criterion: nn.Module,
+) -> Dict[str, float]:
+    loss = criterion(student_preds, labels).item()
+    preds = student_preds.argmax(dim=1).cpu().numpy()
     labels = labels.cpu().numpy()
     return {
         "loss": loss,
@@ -29,12 +34,15 @@ def compute_metrics(outputs: torch.Tensor, labels: torch.Tensor, loss: float) ->
 
 def train(
     config: Dict[str, Any] = None,
-    model: nn.Module = None,
+    teacher: nn.Module = None,
+    student: nn.Module = None,
     train_loader: DataLoader = None,
     criterion: nn.Module = None,
+    kd_loss: nn.Module = None,
     optimizer: torch.optim = None,
 ) -> Dict[str, float]:
-    model.train()
+    teacher.eval()
+    student.train()
 
     avg_metrics = defaultdict(float)
     num_samples = len(train_loader)
@@ -42,14 +50,22 @@ def train(
     for i, (inputs, labels) in enumerate(pbar, 0):
         inputs, labels = inputs.to(config["device"]), labels.to(config["device"])
 
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
+        with torch.no_grad():
+            teacher_preds = teacher(inputs)
+
+        student_preds = student(inputs)
+
+        classification_loss = criterion(student_preds, labels)
+        kd = kd_loss(student_preds, teacher_preds.detach())
+
+        loss = classification_loss + kd
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        train_metrics = compute_metrics(outputs, labels, criterion)
+        train_metrics = compute_metrics(student_preds, labels, criterion)
+        train_metrics["kd"] = kd
         pbar.set_postfix(train_metrics)
 
         for k, v in train_metrics.items():
@@ -61,7 +77,7 @@ def train(
 @torch.inference_mode()
 def evaluate(
     config: Dict[str, Any] = None,
-    model: nn.Module = None,
+    student: nn.Module = None,
     test_loader: DataLoader = None,
     criterion: nn.Module = None,
 ) -> Dict[str, float]:
@@ -69,9 +85,9 @@ def evaluate(
     num_samples = len(test_loader)
     for images, labels in test_loader:
         images, labels = images.to(config["device"]), labels.to(config["device"])
-        outputs = model(images)
+        student_preds = student(images)
 
-        test_metrics = compute_metrics(outputs, labels, criterion)
+        test_metrics = compute_metrics(student_preds, labels, criterion)
         for k, v in test_metrics.items():
             avg_metrics[k] += v
 
@@ -80,68 +96,64 @@ def evaluate(
 
 def train_and_evaluate(
     config: Dict[str, Any] = None,
-    model: nn.Module = None,
+    teacher: nn.Module = None,
+    student: nn.Module = None,
     train_loader: DataLoader = None,
     test_loader: DataLoader = None,
     criterion: nn.Module = None,
+    kd_loss: nn.Module = None,
     optimizer: torch.optim.Optimizer = None,
     logger: Optional[TensorBoardLogger] = None,
 ) -> None:
     best_loss = np.inf
     for epoch in range(config["num_epochs"]):
-        train_metrics = train(config, model, train_loader, criterion, optimizer)
+        train_metrics = train(config, teacher, student, train_loader, criterion, kd_loss, optimizer)
         print(f"Train[{epoch + 1}] " + ", ".join(f"{k}: {v:.4f}" for k, v in train_metrics.items()))
         logger.log_metrics(train_metrics, epoch, "train")
 
-        test_metrics = evaluate(config, model, test_loader, criterion)
+        test_metrics = evaluate(config, student, test_loader, criterion)
         print(f"Test[{epoch + 1}] " + ", ".join(f"{k}: {v:.4f}" for k, v in test_metrics.items()))
         logger.log_metrics(test_metrics, epoch, "test")
 
         if best_loss > test_metrics["loss"]:
             best_loss = test_metrics["loss"]
-            save_model(model, os.path.join(config["model_dir"], config["model_path"] + ".pth"))
+            save_model(student, os.path.join(config["model_dir"], config["model_path"] + ".pth"))
 
 
 def save_model(model: nn.Module, filename: str):
     torch.save(model.state_dict(), filename)
 
 
-def load_model(filename: str, num_classes: int) -> nn.Module:
-    model = CNN(num_classes)
-    model.load_state_dict(torch.load(filename))
-    return model
-
-
 if __name__ == "__main__":
-    # config = load_yaml("src/config/teacher.yaml")
-    config = load_yaml("src/config/student.yaml")
+    config = load_yaml("src/config/logits_kd.yaml")
     print(config)
 
+    # Set random seed for reproducibility
+    set_randomness(config["random_seed"])
+
+    # Load the dataset
+    dataLoader = get_dataloaders(config)
+    train_loader = dataLoader["train"]
+    test_loader = dataLoader["test"]
+
     # Create a model
-    model = CNN(num_classes=10).to(config["device"])
-    # model = SmallCNN(num_classes=10).to(config["device"])
-    print(compute_model_size(model))
+    teacher = CNN(num_classes=10).to(config["device"])
+    teacher.load_state_dict(torch.load("src/results/teacher.pth"))
 
-    # # Set random seed for reproducibility
-    # set_randomness(config["random_seed"])
+    student = SmallCNN(num_classes=10).to(config["device"])
 
-    # # Load the dataset
-    # dataLoader = get_dataloaders(config)
-    # train_loader = dataLoader["train"]
-    # test_loader = dataLoader["test"]
+    criterion = nn.CrossEntropyLoss()
+    kd_loss = LogitsKDLoss(weights=config["kd_weights"])
+    optimizer = torch.optim.Adam(student.parameters(), lr=config["lr"])
 
-    # # model = SmallCNN(num_classes=10).to(config["device"])
-    # criterion = nn.CrossEntropyLoss()
-    # optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
+    # Create a directory to save the model
+    os.makedirs(config["model_dir"], exist_ok=True)
 
-    # # Create a directory to save the model
-    # os.makedirs(config["model_dir"], exist_ok=True)
+    # Create a logger
+    logger = TensorBoardLogger(config["log_dir"])
+    logger.init_logger()
+    logger.init_experiment(config["experiment_name"])
+    logger.log_params(config)
 
-    # # Create a logger
-    # logger = TensorBoardLogger(config["log_dir"])
-    # logger.init_logger()
-    # logger.init_experiment(config["experiment_name"])
-    # logger.log_params(config)
-
-    # # Train the model
-    # train_and_evaluate(config, model, train_loader, test_loader, criterion, optimizer, logger)
+    # Train the model
+    train_and_evaluate(config, teacher, student, train_loader, test_loader, criterion, kd_loss, optimizer, logger)

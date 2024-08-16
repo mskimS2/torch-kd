@@ -1,3 +1,4 @@
+import os
 import torch
 from .base import Logger
 from torch.utils.tensorboard import SummaryWriter
@@ -9,6 +10,8 @@ class TensorBoardLogger(Logger):
         self.log_dir = log_dir
 
     def init_logger(self):
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir, exist_ok=True)
         self.writer = SummaryWriter(log_dir=self.log_dir)
 
     def log_params(self, params: Dict[str, Any]):
