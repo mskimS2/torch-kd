@@ -4,12 +4,13 @@ import numpy as np
 from torch import nn
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from typing import Dict, Any
-from model import CNN
+from typing import Dict, Any, Optional
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from loggers.tensorboard import TensorBoardLogger
+from collections import defaultdict
+from model import CNN, SmallCNN
 from utils import set_randomness
 from dataset import get_dataloaders
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, log_loss
-from collections import defaultdict
 
 
 def compute_metrics(outputs: torch.Tensor, labels: torch.Tensor, loss: float) -> Dict[str, float]:
@@ -26,11 +27,11 @@ def compute_metrics(outputs: torch.Tensor, labels: torch.Tensor, loss: float) ->
 
 
 def train(
-    config: Dict[str, Any],
-    model: nn.Module,
-    train_loader: DataLoader,
-    criterion: nn.Module,
-    optimizer: torch.optim,
+    config: Dict[str, Any] = None,
+    model: nn.Module = None,
+    train_loader: DataLoader = None,
+    criterion: nn.Module = None,
+    optimizer: torch.optim = None,
 ) -> Dict[str, float]:
     model.train()
 
@@ -58,10 +59,10 @@ def train(
 
 @torch.inference_mode()
 def evaluate(
-    config: Dict[str, Any],
-    model: nn.Module,
-    test_loader: DataLoader,
-    criterion: nn.Module,
+    config: Dict[str, Any] = None,
+    model: nn.Module = None,
+    test_loader: DataLoader = None,
+    criterion: nn.Module = None,
 ) -> Dict[str, float]:
     avg_metrics = defaultdict(float)
     num_samples = len(test_loader)
@@ -83,18 +84,21 @@ def train_and_evaluate(
     test_loader: DataLoader = None,
     criterion: nn.Module = None,
     optimizer: torch.optim.Optimizer = None,
+    logger: Optional[TensorBoardLogger] = None,
 ) -> None:
     best_loss = np.inf
     for epoch in range(config["num_epochs"]):
         train_metrics = train(config, model, train_loader, criterion, optimizer)
-        print(f"Train Epoch {epoch + 1}: " + ", ".join(f"{k}: {v:.4f}" for k, v in train_metrics.items()))
+        print(f"Train[{epoch + 1}] " + ", ".join(f"{k}: {v:.4f}" for k, v in train_metrics.items()))
+        logger.log_metrics(train_metrics, epoch, "train")
 
         test_metrics = evaluate(config, model, test_loader, criterion)
-        print(f"Test Epoch {epoch + 1}: " + ", ".join(f"{k}: {v:.4f}" for k, v in test_metrics.items()))
+        print(f"Test[{epoch + 1}] " + ", ".join(f"{k}: {v:.4f}" for k, v in test_metrics.items()))
+        logger.log_metrics(test_metrics, epoch, "test")
 
         if best_loss > test_metrics["loss"]:
             best_loss = test_metrics["loss"]
-            save_model(model, os.path.join(model_dir, "teacher.pth"))
+            save_model(model, os.path.join(config["model_dir"], config["model_path"] + ".pth"))
 
 
 def save_model(model: nn.Module, filename: str):
@@ -109,7 +113,7 @@ def load_model(filename: str, num_classes: int) -> nn.Module:
 
 if __name__ == "__main__":
     config = {
-        "num_epochs": 100,
+        "num_epochs": 50,
         "lr": 0.001,
         "batch_size": 256,
         "random_seed": 42,
@@ -117,6 +121,10 @@ if __name__ == "__main__":
         "dataset": "cifar10",
         "num_workers": 2,
         "pin_memory": False,
+        "model_dir": "src/results",
+        "model_path": "teacher",
+        "log_dir": "logs/teacher",
+        "experiment_name": "teacher/train",
     }
 
     print(config)
@@ -129,13 +137,20 @@ if __name__ == "__main__":
     train_loader = dataLoader["train"]
     test_loader = dataLoader["test"]
 
+    # Create a model
     model = CNN(num_classes=10).to(config["device"])
+    # model = SmallCNN(num_classes=10).to(config["device"])
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
     # Create a directory to save the model
-    model_dir = "src/results"
-    os.makedirs(model_dir, exist_ok=True)
+    os.makedirs(config["model_dir"], exist_ok=True)
+
+    # Create a logger
+    logger = TensorBoardLogger(config["log_dir"])
+    logger.init_logger()
+    logger.init_experiment(config["experiment_name"])
+    logger.log_params(config)
 
     # Train the model
-    train_and_evaluate(config, model, train_loader, test_loader, criterion, optimizer)
+    train_and_evaluate(config, model, train_loader, test_loader, criterion, optimizer, logger)
