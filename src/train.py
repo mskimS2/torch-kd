@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from loggers.tensorboard import TensorBoardLogger
 from collections import defaultdict
-from model import CNN, SmallCNN
+from models.cnn import CNN, SmallCNN
 from utils import set_randomness, compute_model_size
 from dataset import get_dataloaders
 from config.parse import load_yaml
