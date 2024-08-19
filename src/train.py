@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from loggers.tensorboard import TensorBoardLogger
 from collections import defaultdict
-from models.cnn import CNN, SmallCNN
+from models import CNN, SmallCNN, ResNet
 from utils import set_randomness, compute_model_size
 from dataset import get_dataloaders
 from config.parse import load_yaml
@@ -42,7 +42,7 @@ def train(
     for i, (inputs, labels) in enumerate(pbar, 0):
         inputs, labels = inputs.to(config["device"]), labels.to(config["device"])
 
-        outputs = model(inputs)
+        outputs, _ = model(inputs)
         loss = criterion(outputs, labels)
 
         optimizer.zero_grad()
@@ -69,7 +69,7 @@ def evaluate(
     num_samples = len(test_loader)
     for images, labels in test_loader:
         images, labels = images.to(config["device"]), labels.to(config["device"])
-        outputs = model(images)
+        outputs, _ = model(images)
 
         test_metrics = compute_metrics(outputs, labels, criterion)
         for k, v in test_metrics.items():
@@ -113,13 +113,17 @@ def load_model(filename: str, num_classes: int) -> nn.Module:
 
 
 if __name__ == "__main__":
-    config = load_yaml("src/config/teacher.yaml")
+    # config = load_yaml("src/config/student_resnet.yaml")
+    config = load_yaml("src/config/teacher_resnet.yaml")
     # config = load_yaml("src/config/student.yaml")
     print(config)
 
     # Create a model
-    model = CNN(num_classes=10).to(config["device"])
+    # model = CNN(num_classes=10).to(config["device"])
     # model = SmallCNN(num_classes=10).to(config["device"])
+
+    model = ResNet(in_channels=config["in_channels"], layers=config["layers"], num_classes=10).to(config["device"])
+
     print(compute_model_size(model))
 
     # Set random seed for reproducibility

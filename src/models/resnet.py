@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, Tuple
-from utils import init_weights
+from models.utils import init_weights
 
 
 class ResNetBlock(nn.Module):
@@ -34,9 +34,10 @@ class ResNetBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, in_channels: List[int], layers: List[int], num_classes: int = 10):
+    def __init__(self, in_channels: List[int], layers: List[int], num_classes: int = 10, use_featuremap: bool = False):
         super(ResNet, self).__init__()
         assert len(in_channels) == len(layers), "`in_channels` and `layers` must have the same length"
+        self.use_featuremap = use_featuremap
         self.initial_channels = in_channels[0]
         self.conv1 = nn.Sequential(
             nn.Conv2d(3, self.initial_channels, kernel_size=3, stride=1, padding=1, bias=False),
@@ -71,13 +72,16 @@ class ResNet(nn.Module):
         out = F.avg_pool2d(x, 4).view(x.size(0), -1)
         logits = self.classifier(out)
 
-        return logits, feature_maps
+        if self.use_featuremap:
+            return logits, feature_maps
+
+        return logits, []
 
 
 # test code
 if __name__ == "__main__":
     in_channels = [16, 32, 64, 128]
-    layers = [1, 1, 1, 1]
+    layers = [3, 4, 6, 3]
     num_classes = 10
 
     model = ResNet(in_channels, layers, num_classes)

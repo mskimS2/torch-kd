@@ -1,6 +1,7 @@
 import torch
 from torch import nn
-from utils import init_weights
+from models.utils import init_weights
+from typing import Tuple, List
 
 
 class CNN(nn.Module):
@@ -27,10 +28,10 @@ class CNN(nn.Module):
 
         self.apply(init_weights)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, List[torch.Tensor]]:
         x = self.features(x)
         x = torch.flatten(x, 1)
-        return self.classifier(x)
+        return self.classifier(x), []
 
 
 class SmallCNN(nn.Module):
@@ -53,7 +54,7 @@ class SmallCNN(nn.Module):
 
         self.apply(init_weights)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, List[torch.Tensor]]:
         x = self.features(x)
         x = torch.flatten(x, 1)
-        return self.classifier(x)
+        return self.classifier(x), []

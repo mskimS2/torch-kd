@@ -1,0 +1,17 @@
+num_epochs: 50
+lr: 0.001
+batch_size: 128
+in_channels: [16, 32, 64, 128]
+layers: [1, 1, 1, 1]
+random_seed: 42
+device: "cuda" # or "cpu"
+dataset: "cifar10"
+num_workers: 4
+pin_memory: false
+model_dir: "src/results"
+model_path: "soft_target"
+log_dir: "logs/resnet/soft_target"
+experiment_name: "soft_target/train"
+kd_weights: 1.0
+temperature: 4.0
+teacher_model_dir: "src/results/teacher_resnet.pth"

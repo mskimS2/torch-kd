@@ -1,7 +1,7 @@
 # Torch-KD
 This project offers a framework for applying `Knowledge Distillation (KD)` to various deep learning models. In KD, a large model (`Teacher`) helps a smaller model (`Student`) become more efficient while maintaining performance. This approach is ideal for creating models that work well in resource-constrained environments like mobile devices or embedded systems.
 
-In this project, we demonstrate the application of Knowledge Distillation using CNN as the `Teacher` model and a simplified CNN model as the `Student` on the Image dataset (CIFAR-10). The framework is designed to be easily extensible to different datasets and models.
+In this project, we demonstrate the application of Knowledge Distillation using CNN as the `Teacher` model and a simplified `CNN`, `ResNet` model as the `Student` on the Image dataset (CIFAR-10). The framework is designed to be easily extensible to different datasets and models.
 
 # Getting Started
 You can easily manage dependencies using Poetry. Install all required packages by running:
@@ -17,11 +17,17 @@ poetry run tensorboard --logdir logs/
 ```
 
 # Experimental Results: Performance Comparison
-| Teacher (Size)        | Student (Size)              | KD (parameter value)            | Accuracy | Epoch |
-|-----------------------|-----------------------------|---------------------------------|----------|-------|
-| CNN (4.53M, baseline) | -                           | -                               | 82.80%   | 50    |
-| -                     | SimpleCNN (1.02M, baseline) | -                               | 73.12%   | 50    |
-| CNN (4.53M)           | SimpleCNN (1.02M)           | logits (weight=1.0)             | 73.59%   | 50    |
-| CNN (4.53M)           | SimpleCNN (1.02M)           | logits (weight=0.1)             | 74.62%   | 50    |
-| CNN (4.53M)           | SimpleCNN (1.02M)           | soft_target (T=1.0, weight=1.0) | 74.22%   | 50    |
-| CNN (4.53M)           | SimpleCNN (1.02M)           | soft_target (T=4.0, weight=1.0) | 75.60%   | 50    |
+The Teacher model and Student model are simple model structures inspired by [`CNN`](https://pytorch.org/tutorials/beginner/knowledge_distillation_tutorial.html) and [`ResNet`](https://arxiv.org/pdf/1512.03385), respectively, with the model size differing by approximately 4 times.
+
+| Teacher (Size)          | Student (Size)              | KD (parameter value)            | Accuracy | Epoch |
+|-------------------------|-----------------------------|---------------------------------|----------|-------|
+| CNN (4.53M, baseline)   | -                           | -                               | 82.80%   | 50    |
+| -                       | SimpleCNN (1.02M, baseline) | -                               | 73.12%   | 50    |
+| CNN (4.53M)             | SimpleCNN (1.02M)           | logits (weight=1.0)             | 73.59%   | 50    |
+| CNN (4.53M)             | SimpleCNN (1.02M)           | logits (weight=0.1)             | 74.62%   | 50    |
+| CNN (4.53M)             | SimpleCNN (1.02M)           | soft_target (T=1.0, weight=1.0) | 74.22%   | 50    |
+| CNN (4.53M)             | SimpleCNN (1.02M)           | soft_target (T=4.0, weight=1.0) | 75.60%   | 50    |
+| ResNet (5.09M, baseline)| -                           | -                               | 87.75%   | 50    |
+| -                       | ResNet (1.18M, baseline)    | -                               | 85.09%   | 50    |
+| ResNet (5.09M)          | ResNet (1.18M)              | logits (weight=1.0)             | 84.39%   | 50    |
+| ResNet (5.09M)          | ResNet (1.18M)              | logits (weight=0.1)             | 85.23%   | 50    |

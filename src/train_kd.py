@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from loggers.tensorboard import TensorBoardLogger
 from collections import defaultdict
-from models.cnn import CNN, SmallCNN
+from models import CNN, SmallCNN, ResNet
 from utils import set_randomness
 from dataset import get_dataloaders
 from kd import get_kd_loss
@@ -52,9 +52,9 @@ def train(
         inputs, labels = inputs.to(config["device"]), labels.to(config["device"])
 
         with torch.no_grad():
-            teacher_preds = teacher(inputs)
+            teacher_preds, fm_t = teacher(inputs)
 
-        student_preds = student(inputs)
+        student_preds, fm_s = student(inputs)
 
         classification_loss = criterion(student_preds, labels)
         kd = kd_loss(student_preds, teacher_preds.detach())
@@ -86,7 +86,7 @@ def evaluate(
     num_samples = len(test_loader)
     for images, labels in test_loader:
         images, labels = images.to(config["device"]), labels.to(config["device"])
-        student_preds = student(images)
+        student_preds, fm_s = student(images)
 
         test_metrics = compute_metrics(student_preds, labels, criterion)
         for k, v in test_metrics.items():
@@ -128,9 +128,10 @@ def save_model(model: nn.Module, filename: str):
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Train a student model using knowledge distillation.")
     args.add_argument("--kd", type=str, default="logits", help="logits, soft_target")
+    args.add_argument("--model", type=str, default="resnet", help="cnn, resnet")
     p = args.parse_args()
 
-    config = load_yaml(f"src/config/{p.kd}.yaml")
+    config = load_yaml(f"src/config/{p.model}/{p.kd}.yaml")
     print(config)
 
     set_randomness(config["random_seed"])  # Set random seed for reproducibility
@@ -142,10 +143,15 @@ if __name__ == "__main__":
     test_loader = dataLoader["test"]
 
     # Create a model
-    teacher = CNN(num_classes=10).to(config["device"])
-    teacher.load_state_dict(torch.load("src/results/teacher.pth"))
+    # teacher = CNN(num_classes=10).to(config["device"])
+    # teacher.load_state_dict(torch.load("src/results/teacher.pth"))
 
-    student = SmallCNN(num_classes=10).to(config["device"])
+    # student = SmallCNN(num_classes=10).to(config["device"])
+
+    teacher = ResNet(in_channels=[16, 32, 64, 128], layers=[3, 4, 6, 3], num_classes=10).to(config["device"])
+    teacher.load_state_dict(torch.load(config["teacher_model_dir"]))
+
+    student = ResNet(in_channels=config["in_channels"], layers=config["layers"], num_classes=10).to(config["device"])
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(student.parameters(), lr=config["lr"])
