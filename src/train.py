@@ -10,7 +10,7 @@ from loggers.tensorboard import TensorBoardLogger
 from collections import defaultdict
 from models import CNN, SmallCNN, ResNet
 from utils import set_randomness, compute_model_size
-from dataset import get_dataloaders
+from datasets.dataset import get_dataloaders
 from config.parse import load_yaml
 
 
@@ -86,12 +86,16 @@ def train_and_evaluate(
     criterion: nn.Module = None,
     optimizer: torch.optim.Optimizer = None,
     logger: Optional[TensorBoardLogger] = None,
+    scheduler: torch.optim.Optimizer = None,
 ) -> None:
     best_loss = np.inf
     for epoch in range(config["num_epochs"]):
         train_metrics = train(config, model, train_loader, criterion, optimizer)
         print(f"Train[{epoch + 1}] " + ", ".join(f"{k}: {v:.4f}" for k, v in train_metrics.items()))
         logger.log_metrics(train_metrics, epoch, "train")
+
+        if scheduler is not None:
+            scheduler.step()
 
         test_metrics = evaluate(config, model, test_loader, criterion)
         print(f"Test[{epoch + 1}] " + ", ".join(f"{k}: {v:.4f}" for k, v in test_metrics.items()))
@@ -113,18 +117,9 @@ def load_model(filename: str, num_classes: int) -> nn.Module:
 
 
 if __name__ == "__main__":
-    # config = load_yaml("src/config/student_resnet.yaml")
-    config = load_yaml("src/config/teacher_resnet.yaml")
-    # config = load_yaml("src/config/student.yaml")
+    config = load_yaml("src/config/resnet/student.yaml")
+    # config = load_yaml("src/config/resnet/teacher.yaml")
     print(config)
-
-    # Create a model
-    # model = CNN(num_classes=10).to(config["device"])
-    # model = SmallCNN(num_classes=10).to(config["device"])
-
-    model = ResNet(in_channels=config["in_channels"], layers=config["layers"], num_classes=10).to(config["device"])
-
-    print(compute_model_size(model))
 
     # Set random seed for reproducibility
     set_randomness(config["random_seed"])
@@ -134,8 +129,19 @@ if __name__ == "__main__":
     train_loader = dataLoader["train"]
     test_loader = dataLoader["test"]
 
+    # Create a model
+    model = ResNet(
+        in_channels=config["in_channels"],
+        layers=config["layers"],
+        num_classes=10,
+        use_featuremap=False,
+    ).to(config["device"])
+
+    print(compute_model_size(model))
+
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"])
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=0.0001)
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
     # Create a directory to save the model
     os.makedirs(config["model_dir"], exist_ok=True)
@@ -147,4 +153,4 @@ if __name__ == "__main__":
     logger.log_params(config)
 
     # Train the model
-    train_and_evaluate(config, model, train_loader, test_loader, criterion, optimizer, logger)
+    train_and_evaluate(config, model, train_loader, test_loader, criterion, optimizer, logger, scheduler)

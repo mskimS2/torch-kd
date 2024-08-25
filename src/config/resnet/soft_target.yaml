@@ -1,17 +1,25 @@
-num_epochs: 50
-lr: 0.001
-batch_size: 128
-in_channels: [16, 32, 64, 128]
-layers: [1, 1, 1, 1]
-random_seed: 42
-device: "cuda" # or "cpu"
-dataset: "cifar10"
-num_workers: 4
-pin_memory: false
-model_dir: "src/results"
-model_path: "soft_target"
-log_dir: "logs/resnet/soft_target"
-experiment_name: "soft_target/train"
-kd_weights: 1.0
-temperature: 4.0
-teacher_model_dir: "src/results/teacher_resnet.pth"
+training:
+  num_epochs: 30
+  lr: 0.001
+  batch_size: 128
+  random_seed: 42
+  device: "cuda" # or "cpu"
+  kd_weights: 1.0
+  temperature: 4.0
+  log_dir: "logs/resnet/soft_target"
+  dataset: "cifar10"
+  num_workers: 4
+  pin_memory: true
+  experiment_name: "soft_target_resnet/train"
+  model_dir: "src/results"
+  model_path: "soft_target"
+  augmentation: false
+
+teacher:
+  in_channels: [64, 64, 64, 64]
+  layers: [3, 6, 4, 3]
+  save_dir: "src/results/teacher_resnet.pth"
+
+student:
+  in_channels: [64, 64, 64, 64]
+  layers: [1, 1, 1, 1]

@@ -6,6 +6,7 @@ In this project, we demonstrate the application of Knowledge Distillation using 
 # Getting Started
 You can easily manage dependencies using Poetry. Install all required packages by running:
 ```
+poetry shell
 poetry install
 ```
 # Prepare the Dataset
@@ -13,21 +14,16 @@ This project uses the CIFAR-10 dataset, which is automatically downloaded via th
 
 # Visualize Training Metrics with TensorBoard
 ```
-poetry run tensorboard --logdir logs/
+tensorboard --logdir=./logs
 ```
 
 # Experimental Results: Performance Comparison
 The Teacher model and Student model are simple model structures inspired by [`CNN`](https://pytorch.org/tutorials/beginner/knowledge_distillation_tutorial.html) and [`ResNet`](https://arxiv.org/pdf/1512.03385), respectively, with the model size differing by approximately 4 times.
 
-| Teacher (Size)          | Student (Size)              | KD (parameter value)            | Accuracy | Epoch |
-|-------------------------|-----------------------------|---------------------------------|----------|-------|
-| CNN (4.53M, baseline)   | -                           | -                               | 82.80%   | 50    |
-| -                       | SimpleCNN (1.02M, baseline) | -                               | 73.12%   | 50    |
-| CNN (4.53M)             | SimpleCNN (1.02M)           | logits (weight=1.0)             | 73.59%   | 50    |
-| CNN (4.53M)             | SimpleCNN (1.02M)           | logits (weight=0.1)             | 74.62%   | 50    |
-| CNN (4.53M)             | SimpleCNN (1.02M)           | soft_target (T=1.0, weight=1.0) | 74.22%   | 50    |
-| CNN (4.53M)             | SimpleCNN (1.02M)           | soft_target (T=4.0, weight=1.0) | 75.60%   | 50    |
-| ResNet (5.09M, baseline)| -                           | -                               | 87.75%   | 50    |
-| -                       | ResNet (1.18M, baseline)    | -                               | 85.09%   | 50    |
-| ResNet (5.09M)          | ResNet (1.18M)              | logits (weight=1.0)             | 84.39%   | 50    |
-| ResNet (5.09M)          | ResNet (1.18M)              | logits (weight=0.1)             | 85.23%   | 50    |
+| Teacher (Size)              | Student (Size)              | KD (parameter value)            | Accuracy | Epoch |
+|-----------------------------|-----------------------------|---------------------------------|----------|-------|
+| ResNet (4.57MB, baseline)   | -                           | -                               | 92.84%   | 200   |
+| -                           | ResNet (1.19MB, baseline)   | -                               | 83.61%   | 30    |
+| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | logits (weight=1.0)             | 87.51%   | 30    |
+| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | soft_target (T=4.0, weight=1.0) | 86.69%   | 30    |
+| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | hints (weight=1.0)              | 87.90%   | 30    |

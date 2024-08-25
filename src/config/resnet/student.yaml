@@ -1,14 +1,15 @@
-num_epochs: 50
+num_epochs: 30
 lr: 0.001
 batch_size: 128
-in_channels: [16, 32, 64, 128]
+in_channels: [64, 64, 64, 64]
 layers: [1, 1, 1, 1]
 random_seed: 42
 device: "cuda"  # or "cpu"
 dataset: "cifar10"
 num_workers: 4
-pin_memory: false
+pin_memory: true
 model_dir: "src/results"
 model_path: "student_resnet"
 log_dir: "logs/resnet/student_resnet"
 experiment_name: "student_resnet/train"
+augmentation: false

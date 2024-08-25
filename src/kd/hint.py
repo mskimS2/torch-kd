@@ -1,23 +1,23 @@
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 from typing import List
 
 
-class LogitsKDLoss(nn.Module):
+class HintKDLoss(nn.Module):
     """
-    Do Deep Nets Really Need to be Deep?
-    - http://papers.nips.cc/paper/5484-do-deep-nets-really-need-to-be-deep
+    FITNETS: HINTS FOR THIN DEEP NETS
+    - https://arxiv.org/pdf/1412.6550
     """
 
     def __init__(self, weights: float = 1.0):
         """
-        Initializes the LogitsKDLoss module.
+        Initializes the HintKDLoss module.
 
         Args:
         - weights (float, optional): Weight factor to scale the MSE loss (Default is 1.0).
         """
-        super(LogitsKDLoss, self).__init__()
+        super(HintKDLoss, self).__init__()
         self.weights = weights
 
     def forward(
@@ -31,12 +31,14 @@ class LogitsKDLoss(nn.Module):
         Forward pass to compute the weighted knowledge distillation loss.
 
         Args:
-        - pred_s (torch.Tensor): Logits output by the student model.
-        - pred_t (torch.Tensor): Logits output by the teacher model.
+        - pred_s (List[torch.Tensor]): Logits output by the student model.
+        - pred_t (List[torch.Tensor]): Logits output by the teacher model.
         - fm_s (List[torch.Tensor], optional): Feature maps output by the student model (Default is None).
         - fm_t (List[torch.Tensor], optional): Feature maps output by the teacher model (Default is None).
 
         Returns:
-        - torch.Tensor: The computed weighted MSE loss between student and teacher logits.
+        - torch.Tensor: The computed weighted `hint loss` loss between student and teacher logits.
         """
-        return F.mse_loss(pred_s, pred_t.detach()) * self.weights
+        assert len(fm_s) == len(fm_t)
+
+        return F.mse_loss(fm_s[-1], fm_t[-1].detach()) * self.weights

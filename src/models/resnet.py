@@ -34,7 +34,7 @@ class ResNetBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, in_channels: List[int], layers: List[int], num_classes: int = 10, use_featuremap: bool = False):
+    def __init__(self, in_channels: List[int], layers: List[int], num_classes: int = 10, use_featuremap: bool = True):
         super(ResNet, self).__init__()
         assert len(in_channels) == len(layers), "`in_channels` and `layers` must have the same length"
         self.use_featuremap = use_featuremap
