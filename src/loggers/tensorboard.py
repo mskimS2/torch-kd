@@ -1,6 +1,5 @@
 import os
-import torch
-from .base import Logger
+from loggers.base import Logger
 from torch.utils.tensorboard import SummaryWriter
 from typing import Dict, Any
 

@@ -10,17 +10,17 @@ class SoftTargetKDLoss(nn.Module):
     - https://arxiv.org/pdf/1503.02531
     """
 
-    def __init__(self, T: float = 1.0, weights: float = 1.0):
+    def __init__(self, T: float = 1.0, weight: float = 1.0):
         """
         Initializes the SoftTargetKDLoss module.
 
         Args:
         - T (float, optional): Temperature factor to soften the student logits (Default is 1.0).
-        - weights (float, optional): Weight factor to scale the MSE loss (Default is 1.0).
+        - weight (float, optional): Weight factor to scale the loss (Default is 1.0).
         """
         super(SoftTargetKDLoss, self).__init__()
         self.T = T
-        self.weights = weights
+        self.weight = weight
 
     def forward(
         self,
@@ -48,4 +48,4 @@ class SoftTargetKDLoss(nn.Module):
                 reduction="batchmean",
             )
             * self.T**2
-        ) * self.weights
+        ) * self.weight

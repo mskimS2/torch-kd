@@ -1,2 +1,3 @@
-from models.cnn import CNN, SmallCNN
 from models.resnet import ResNet
+
+__all__ = [ResNet]

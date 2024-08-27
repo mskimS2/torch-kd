@@ -6,19 +6,19 @@ from typing import List
 
 class HintKDLoss(nn.Module):
     """
-    FITNETS: HINTS FOR THIN DEEP NETS
+    FitNets: Hints for Thin Deep Nets
     - https://arxiv.org/pdf/1412.6550
     """
 
-    def __init__(self, weights: float = 1.0):
+    def __init__(self, weight: float = 1.0):
         """
         Initializes the HintKDLoss module.
 
         Args:
-        - weights (float, optional): Weight factor to scale the MSE loss (Default is 1.0).
+        - weight (float, optional): Weight factor to scale the loss (Default is 1.0).
         """
         super(HintKDLoss, self).__init__()
-        self.weights = weights
+        self.weight = weight
 
     def forward(
         self,
@@ -39,6 +39,9 @@ class HintKDLoss(nn.Module):
         Returns:
         - torch.Tensor: The computed weighted `hint loss` loss between student and teacher logits.
         """
-        assert len(fm_s) == len(fm_t)
 
-        return F.mse_loss(fm_s[-1], fm_t[-1].detach()) * self.weights
+        assert len(fm_s) == len(fm_t), ValueError(
+            "The number of feature maps from student and teacher must be the same"
+        )
+
+        return F.mse_loss(fm_s[-1], fm_t[-1].detach()) * self.weight
