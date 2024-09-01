@@ -1,9 +1,10 @@
 from torch import nn
-from typing import Dict, Any
+from typing import Dict, Any, Type
 from kd.logit import LogitsKDLoss
 from kd.soft_target import SoftTargetKDLoss
 from kd.hint import HintKDLoss
 from kd.attention_transfer import AttentionTransferKDLoss
+from kd.similarity_preserving import SimilarityPreservingKDLoss
 
 
 def get_kd_loss(kd: str, config: Dict[str, Any]) -> nn.Module:
@@ -16,21 +17,18 @@ def get_kd_loss(kd: str, config: Dict[str, Any]) -> nn.Module:
     Returns:
     - nn.Module: Knowledge distillation loss module.
     """
-    if kd == "logits":
-        return LogitsKDLoss(config["kd_weights"])
-    elif kd == "soft_target":
-        return SoftTargetKDLoss(config["temperature"], config["kd_weights"])
-    elif kd == "hints":
-        return HintKDLoss(config["kd_weights"])
-    elif kd == "attention_transfer":
-        return AttentionTransferKDLoss(config["kd_pow"], config["kd_weights"], config["kd_type"])
+    kd_loss: Dict[str, Type[nn.Module]] = {
+        "logits": LogitsKDLoss,
+        "soft_target": SoftTargetKDLoss,
+        "hints": HintKDLoss,
+        "attention_transfer": AttentionTransferKDLoss,
+        "similarity_preserving": SimilarityPreservingKDLoss,
+    }
 
-    raise ValueError(f"Invalid knowledge distillation method: {kd}")
+    if kd not in kd_loss:
+        raise ValueError(f"Invalid knowledge distillation method: {kd}")
+
+    return kd_loss[kd](**config)
 
 
-__all__ = [
-    LogitsKDLoss,
-    SoftTargetKDLoss,
-    HintKDLoss,
-    AttentionTransferKDLoss,
-]
+__all__ = [LogitsKDLoss, SoftTargetKDLoss, HintKDLoss, AttentionTransferKDLoss, SimilarityPreservingKDLoss]

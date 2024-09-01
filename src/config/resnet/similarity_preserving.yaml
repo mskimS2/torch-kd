@@ -4,16 +4,16 @@ training:
   batch_size: 128
   random_seed: 42
   device: "cuda" # or "cpu"
-  log_dir: "logs/resnet/hints"
+  log_dir: "logs/resnet/similarity_preserving"
   dataset: "cifar10"
   num_workers: 4
   pin_memory: true
-  experiment_name: "hints_resnet/train"
+  experiment_name: "similarity_preserving_resnet/train"
   model_dir: "src/results"
-  model_path: "hints"
+  model_path: "similarity_preserving"
   augmentation: false
   # Knowledge distillation
-  weight: 1.
+  weight: 3000. # default(paper): 3000.0 
 
 teacher:
   in_channels: [64, 64, 64, 64]

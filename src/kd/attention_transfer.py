@@ -10,7 +10,7 @@ class AttentionTransferKDLoss(nn.Module):
     - https://arxiv.org/abs/1612.03928
     """
 
-    def __init__(self, p: float = 2.0, weight: float = 1.0, loss_type: "str" = "sum"):
+    def __init__(self, p: float = 2.0, weight: float = 1.0, loss_type: "str" = "sum", **kwargs):
         """
         Initializes the AttentionTransferKDLoss module.
 

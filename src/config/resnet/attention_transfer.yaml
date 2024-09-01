@@ -4,9 +4,6 @@ training:
   batch_size: 128
   random_seed: 42
   device: "cuda" # or "cpu"
-  kd_weights: 100. # default: 1.0
-  kd_pow: 2
-  kd_type: "sum" # or "max"
   log_dir: "logs/resnet/attention_transfer"
   dataset: "cifar10"
   num_workers: 4
@@ -15,6 +12,10 @@ training:
   model_dir: "src/results"
   model_path: "attention_transfer"
   augmentation: false
+  # Knowledge distillation
+  weight: 100. # default: 1.0
+  kd_pow: 2
+  kd_type: "sum" # or "max"
 
 teacher:
   in_channels: [64, 64, 64, 64]

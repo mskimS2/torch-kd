@@ -10,7 +10,7 @@ class SoftTargetKDLoss(nn.Module):
     - https://arxiv.org/pdf/1503.02531
     """
 
-    def __init__(self, T: float = 1.0, weight: float = 1.0):
+    def __init__(self, T: float = 1.0, weight: float = 1.0, **kwargs):
         """
         Initializes the SoftTargetKDLoss module.
 

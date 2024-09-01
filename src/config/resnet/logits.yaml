@@ -4,7 +4,6 @@ training:
   batch_size: 128
   random_seed: 42
   device: "cuda" # or "cpu"
-  kd_weights: 1.
   log_dir: "logs/resnet/logits"
   dataset: "cifar10"
   num_workers: 4
@@ -13,6 +12,8 @@ training:
   model_dir: "src/results"
   model_path: "logits"
   augmentation: false
+  # Knowledge distillation
+  weight: 1. # default: 1.0 
 
 teacher:
   in_channels: [64, 64, 64, 64]

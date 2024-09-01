@@ -11,7 +11,14 @@ from collections import defaultdict
 from models import ResNet
 from utils import set_randomness, compute_model_size, compute_metrics
 from datasets.dataset import get_dataloaders
-from kd import get_kd_loss, LogitsKDLoss, SoftTargetKDLoss, HintKDLoss
+from kd import (
+    get_kd_loss,
+    LogitsKDLoss,
+    SoftTargetKDLoss,
+    HintKDLoss,
+    AttentionTransferKDLoss,
+    SimilarityPreservingKDLoss,
+)
 from config.parse import load_yaml
 
 
@@ -21,7 +28,13 @@ def train(
     student: nn.Module = None,
     train_loader: DataLoader = None,
     criterion: nn.Module = None,
-    kd_loss: Union[LogitsKDLoss, SoftTargetKDLoss, HintKDLoss] = None,
+    kd_loss: Union[
+        LogitsKDLoss,
+        SoftTargetKDLoss,
+        HintKDLoss,
+        AttentionTransferKDLoss,
+        SimilarityPreservingKDLoss,
+    ] = None,
     optimizer: torch.optim = None,
 ) -> Dict[str, float]:
     teacher.eval()
@@ -110,7 +123,10 @@ def save_model(model: nn.Module, filename: str):
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Train a student model using knowledge distillation.")
     args.add_argument(
-        "--kd", type=str, default="attention_transfer", help="logits, soft_target, hints, attention_transfer"
+        "--kd",
+        type=str,
+        default="attention_transfer",
+        help="logits, soft_target, hints, attention_transfer, similarity_preserving",
     )
     args.add_argument("--model", type=str, default="resnet", help="cnn, resnet")
     p = args.parse_args()

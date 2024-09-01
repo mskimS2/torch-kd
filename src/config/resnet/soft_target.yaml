@@ -4,7 +4,6 @@ training:
   batch_size: 128
   random_seed: 42
   device: "cuda" # or "cpu"
-  kd_weights: 1.0
   temperature: 4.0
   log_dir: "logs/resnet/soft_target"
   dataset: "cifar10"
@@ -14,6 +13,8 @@ training:
   model_dir: "src/results"
   model_path: "soft_target"
   augmentation: false
+  # Knowledge distillation
+  weight: 1.0
 
 teacher:
   in_channels: [64, 64, 64, 64]

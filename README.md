@@ -20,11 +20,12 @@ tensorboard --logdir=./logs
 # Experimental Results: Performance Comparison
 The Teacher model and Student model are simple model structures inspired by [`CNN`](https://pytorch.org/tutorials/beginner/knowledge_distillation_tutorial.html) and [`ResNet`](https://arxiv.org/pdf/1512.03385), respectively, with the model size differing by approximately 4 times.
 
-| Teacher (Size)              | Student (Size)              | KD (parameter value)            | Accuracy | Epoch |
-|-----------------------------|-----------------------------|---------------------------------|----------|-------|
-| ResNet (4.57MB, baseline)   | -                           | -                               | 92.84%   | 200   |
-| -                           | ResNet (1.19MB, baseline)   | -                               | 83.61%   | 30    |
-| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | logits (weight=1.0)             | 87.51%   | 30    |
-| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | soft_target (T=4.0, weight=1.0) | 86.69%   | 30    |
-| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | hints (weight=1.0)              | 87.90%   | 30    |
-| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | attention_transfer (weight=1.0) | 86.21%   | 30    |
+| Teacher (Size)              | Student (Size)              | KD (parameter value)               | Accuracy | Epoch |
+|-----------------------------|-----------------------------|------------------------------------|----------|-------|
+| ResNet (4.57MB, baseline)   | -                           | -                                  | 92.84%   | 200   |
+| -                           | ResNet (1.19MB, baseline)   | -                                  | 83.61%   | 30    |
+| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | logits (weight=1.0)                | 87.51%   | 30    |
+| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | soft_target (T=4.0, weight=1.0)    | 86.69%   | 30    |
+| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | hints (weight=1.0)                 | 87.90%   | 30    |
+| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | attention_transfer (weight=1.0)    | 86.21%   | 30    |
+| ResNet (4.57MB, predtrained)| ResNet (1.19MB)             | similarity_perserving (weight=1.0) | 87.45%   | 30    |

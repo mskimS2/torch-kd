@@ -10,7 +10,7 @@ class HintKDLoss(nn.Module):
     - https://arxiv.org/pdf/1412.6550
     """
 
-    def __init__(self, weight: float = 1.0):
+    def __init__(self, weight: float = 1.0, **kwargs):
         """
         Initializes the HintKDLoss module.
 
